@@ -66,6 +66,7 @@ end
 
 # If user wants to delete account, they will go through this option.
 def delete_account
+    
     puts 'Are you sure you would like to delete your account?'
     puts "(y/n?)"
     answer = get_input
@@ -77,12 +78,15 @@ def delete_account
             puts "Sorry to see you go, come back soon!"
             exit
         else
+            space(3)
             puts "You jerk. You can only delete your account."
+            space(1)
+            delete_account
         end 
     else
         run
     end  
-end 
+end
 
 #gives user a list of options to choose from
 def present_menu_options
@@ -103,15 +107,18 @@ def pick_option
     input = get_input
     if input == '1'
         events_array = search_by_city
+        space(50)
         display_events_by_city(events_array)
         save_event_or_main_menu(events_array)
      elsif input == '2'
         attractions_array = search_by_keyword
+        space(50)
         display_by_keyword(attractions_array)
         save_event_or_main_menu(attractions_array)
      elsif input == '3'
         display_user_events
      elsif input == '4'
+        space(50)
         delete_account
      elsif input == '5'
         space(1)
@@ -165,7 +172,7 @@ def display_events_by_city(events_array)
         name = event["name"]  || 'nil'
         date = event["dates"]["start"]["localDate"] || 'nil'
         url = event["url"] || 'nil'
-        print "#{name} \n #{date} \n #{url} \n "
+        print " Event name: #{name} \n  Event date: #{date} \n  Event url: #{url} \n "
         if Event.find_by(event_type: url) == nil
             $event = create_event(name, date , url)
         end 
@@ -183,7 +190,7 @@ def display_by_keyword(attractions_array)
         name = attraction["name"] || 'nil'
         date = attraction["dates"]["start"]["localDate"] || 'nil'
         url = attraction["url"] || 'nil'
-        print "#{name} \n #{date} \n #{url} \n"
+        print " Event name: #{name} \n  Event date: #{date} \n  Event url: #{url} \n "
         if Event.find_by(event_type: url) == nil
             $event = create_event(name, date , url)
         end
@@ -205,38 +212,70 @@ def save_event_or_main_menu(events_array)
         url = events_array[events_number-1]["url"]
         event = Event.find_by(event_type: url)
         save_event(event.id)
+        space(1)
         puts "You saved #{event.name}!" #dont know why it's breaking here..
         space(1)
         present_menu_options
     elsif response == 'n'
         present_menu_options
+    else 
+        invalid_input
+        save_event_or_main_menu(events_array)
     end
 end
 
 def display_user_events
-    space(1)
+    space(40)
     puts "Here's a list of your events!"
     line
     space(1)
     user_events = UserEvent.select{|event| event.user_id == $logged_in.id}
     event_objects = user_events.map{|ueo| Event.find(ueo.event_id)}
-    event_objects.each_with_index { |eo, index| print  "#{index+1}. #{eo.name} \n #{eo.date} \n #{eo.event_type} \n" }
+    i = 0
+    event_objects.each_with_index do |eo, index| 
+        puts (index+1).to_s + '.'
+        print "Event name: #{eo.name} \nEvent date: #{eo.date} \nEvent url: #{eo.event_type} \n "
+        line
+    end 
     space(2)
     click?
     space(2)
-    puts "Nice events! Press the enter key for main menu."
-    end_of_display_user_events
+    puts "Nice events!"
+    space(3)
+    puts "If you would like to remove an event from you calendar"
+    puts "please enter 'edit'. Otherwise, just hit Enter to return"
+    puts "to the main menu."
+    space(2)
+    end_of_display_user_events(event_objects)
 end
 
-def end_of_display_user_events
+def end_of_display_user_events(event_objects)
     input = get_input
-    if input == ""
+    if input == 'edit'
+        delete_user_event(event_objects)
+    elsif input == ''
         present_menu_options
-    else
+    else 
         invalid_input
-        end_of_display_user_events
+        end_of_display_user_events(event_objects)
     end
 end
+
+def delete_user_event(event_objects)
+    puts "Please type the number of the event you would like removed: "
+    input = get_input.to_i
+    delete = event_objects[input-1]
+    num = delete.id
+    if UserEvent.find_by(event_id: num)
+        UserEvent.find_by(event_id: num).destroy
+        display_user_events
+    else
+        invalid_input
+    end 
+end 
+
+
+ 
 
 #====================================================================================================================
 #====================================================================================================================
@@ -284,7 +323,7 @@ end
 #visual helper methods
 def space(num)
     num.times do
-        puts
+        puts "\n"
     end 
 end 
 
