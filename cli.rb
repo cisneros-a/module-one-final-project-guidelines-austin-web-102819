@@ -44,7 +44,7 @@ def login_user
     username = get_input
     if User.find_by(username: username)
         logged_in_user = User.find_by(username: username)
-        space(1)
+        space(40)
         puts "Welcome back #{username}!"
         line
         space(1)
@@ -69,15 +69,18 @@ def create_user
         space(1)
     else
     logged_in_user = User.create(username: username)
-    space(1)
+    space(40)
     puts "Nice name, #{username}!"
+    line
     $logged_in = logged_in_user
     end
 end 
 
 # If user wants to delete account, they will go through this option.
 def delete_account
+    space(40)
     puts 'Are you sure you would like to delete your account?'
+    space(1)
     puts "(y/n?)"
     answer = get_input
     if answer == 'y'
@@ -229,8 +232,9 @@ def save_event_or_main_menu(events_array)
         url = events_array[events_number-1]["url"]
         event = Event.find_by(event_type: url)
         save_event(event.id)
-        space(1)
+        space(40)
         puts "You saved #{event.name}!"
+        line
         space(1)
         present_menu_options
     elsif response == 'n'
@@ -242,17 +246,17 @@ def save_event_or_main_menu(events_array)
 end
 
 def display_user_events
-    space(1)
+    space(40)
+    user_events = UserEvent.select{|event| event.user_id == $logged_in.id}
+    if user_events.length == 0
+        double_line
+        puts "Womp, womp. It looks like you haven't saved any events!"
+        double_line
+        present_menu_options
+    end
     puts "Here's a list of your events!"
     double_line
-    space(1)
-    user_events = UserEvent.select{|event| event.user_id == $logged_in.id}
     event_objects = user_events.map{|ueo| Event.find(ueo.event_id)}
-    if event_objects.length == 0
-        puts "Womp, womp. It looks like you haven't saved any events! Press the enter key for main menu."
-        line
-        end_of_display_user_events
-    end
     event_objects.each_with_index { |eo, index| 
     space(2)
     puts (index+1).to_s + '.' 
@@ -262,8 +266,23 @@ def display_user_events
     click?
     space(2)
     puts "Nice events! Press the enter key for main menu."
-    end_of_display_user_events
+    end_of_display_user_events(event_objects)
 end
+
+def delete_user_event(event_objects)
+    puts "Please type the number of the event you would like removed: "
+    input = get_input.to_i
+    delete = event_objects[input-1]
+    num = delete.id
+    if UserEvent.find_by(event_id: num)
+        UserEvent.find_by(event_id: num).destroy
+        display_user_events
+    else
+        invalid_input
+    end 
+end 
+
+
 
 #====================================================================================================================
 #====================================================================================================================
@@ -294,13 +313,18 @@ def click?
     double_line
 end
 
-def end_of_display_user_events
+def end_of_display_user_events(event_objects)
+    space(1)
+    puts 'To delete an event press 1'
+    space(1)
     input = get_input
-    if input == ""
+    if input == '1'
+        delete_user_event(event_objects)
+    elsif input == ''
         present_menu_options
-    else
+    else 
         invalid_input
-        end_of_display_user_events
+        end_of_display_user_events(event_objects)
     end
 end
 
@@ -333,24 +357,4 @@ end
 def double_line
     puts "="*65
 end
-
-### NOTES
-# $key = pyLDDCYURYJ8LZfAUnOayESRsPBTWnKM
-# response = RestClient.get(url)
-# EVENTBRITE_API_BASE_URL = response_string = RestClient.get('https://app.ticketmaster.com/discovery/v2/events.json?apikey='+ $key + '&city=' + city + '&size=25&localStartDateTime=' + date + 'T00:00:00,' + date + 'T23:59:59')
-# response_hash = JSON.parse(response)
-
-# title = events_array[0]["name"]
-# event_url = events_array[0]["url"]
-# event_date = events_array[0]["dates"]["start"]["localDate"]
-
-
-# def get_events_for_artist_and_city(artist, city)
-#     response_string = RestClient.get('https://app.ticketmaster.com/discovery/v2/events.json?apikey='+ $key + '&city=' + city + '&size=25&keyword=' + artist )
-#     response_hash = JSON.parse(response_string)
-#     convert_json_data_to_ruby_objects(response_hash)
-#     display_output_with_date
-#     event = retrieve_user_selection
-#     event_info(event)
-# end
 
